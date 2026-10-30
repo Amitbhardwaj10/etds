@@ -32,6 +32,7 @@ class CustomDropdown extends StatelessWidget {
 
       dropdownStyleData: DropdownStyleData(
         padding: EdgeInsets.symmetric(horizontal: 0),
+        decoration: BoxDecoration(color: AppTheme.primaryWhite),
       ),
 
       menuItemStyleData: MenuItemStyleData(
@@ -39,7 +40,7 @@ class CustomDropdown extends StatelessWidget {
       ),
 
       hint: Text(hintText ?? ''),
-      
+
       valueListenable: valueListenable,
 
       onChanged: (value) {

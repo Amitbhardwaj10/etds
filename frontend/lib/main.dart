@@ -19,13 +19,16 @@ class MainLayout extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppTheme.primaryWhite,
       body: Column(
         children: [
           const Navbar(),
           Expanded(
             child: SingleChildScrollView(
               child: Padding(
-                padding: MediaQuery.of(context).size.width >= 750 ? const EdgeInsets.symmetric(vertical: 20, horizontal: 70) : EdgeInsets.symmetric(horizontal: 10, vertical: 20),
+                padding: MediaQuery.of(context).size.width > 1000
+                    ? const EdgeInsets.symmetric(vertical: 20, horizontal: 70)
+                    : const EdgeInsets.symmetric(horizontal: 10, vertical: 20),
                 child: child,
               ),
             ),

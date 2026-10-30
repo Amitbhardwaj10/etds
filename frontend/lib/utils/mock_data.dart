@@ -144,7 +144,8 @@ class MockData {
       dateOfApplication: '20/12/2024',
       status: 'Pending',
       ageingDays: 9,
-      deductorResponse: 'No Adjournment Sought',
+      deductorResponse:
+          'No Adjournment Sought aslkdfjsd fajlskdjf aksdjf  lkjasjdklfkjsd',
       dateOfHearing: '25/12/2024',
       assignedTo: 'Rahul Verma',
     ),

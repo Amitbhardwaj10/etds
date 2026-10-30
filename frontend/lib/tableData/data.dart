@@ -1,5 +1,3 @@
-import 'dart:nativewrappers/_internal/vm/lib/isolate_patch.dart';
-
 import 'package:flutter/material.dart';
 import 'package:frontend/models/challan_record.dart';
 import 'package:frontend/theme/app_theme.dart';
@@ -46,9 +44,20 @@ class ChallanDataSource extends DataTableSource {
         DataCell(Text(record.deductorTan)),
         DataCell(Text(record.deductorName)),
         DataCell(Text(record.dateOfApplication)),
-        DataCell(Text(record.status)),
+        DataCell(
+          SizedBox(
+            width: 150,
+            child: Text(
+              record.status,
+              maxLines: 3,
+              softWrap: true,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ),
         DataCell(
           Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               if (record.ageingDays > 30)
                 StatusBadge(
@@ -67,7 +76,17 @@ class ChallanDataSource extends DataTableSource {
             ],
           ),
         ),
-        DataCell(Text(record.deductorResponse)),
+        DataCell(
+          SizedBox(
+            width: 150,
+            child: Text(
+              record.deductorResponse,
+              maxLines: 3,
+              softWrap: true,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ),
         DataCell(Text(record.dateOfHearing)),
         DataCell(Text(record.assignedTo)),
       ],

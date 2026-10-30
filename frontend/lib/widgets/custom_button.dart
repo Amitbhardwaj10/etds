@@ -8,6 +8,7 @@ class Button extends StatelessWidget {
   final Color? borderColor;
   final double? borderWidth;
   final EdgeInsetsGeometry padding;
+  final IconData? icon;
   final VoidCallback? onPressed;
 
   const Button({
@@ -18,6 +19,7 @@ class Button extends StatelessWidget {
     this.borderColor = AppTheme.borderColor,
     this.borderWidth = 1,
     this.padding = const EdgeInsets.symmetric(horizontal: 14),
+    this.icon,
     this.onPressed,
   });
 
@@ -41,7 +43,10 @@ class Button extends StatelessWidget {
         disabledMouseCursor: SystemMouseCursors.forbidden,
       ),
       onPressed: onPressed,
-      child: Text(text, style: TextStyle(color: textColor, fontWeight: FontWeight.w400)),
+      child: Row(
+        spacing: 5,
+        children: [(icon != null ? Icon(icon) : SizedBox.shrink()), Text(text)],
+      ),
     );
   }
 }

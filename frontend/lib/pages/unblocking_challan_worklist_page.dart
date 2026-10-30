@@ -1,4 +1,6 @@
+import 'package:excel/excel.dart';
 import 'package:flutter/material.dart';
+import 'package:frontend/models/challan_record.dart';
 import 'package:frontend/tableData/data.dart';
 import 'package:frontend/theme/app_theme.dart';
 import 'package:frontend/utils/mock_data.dart';
@@ -23,8 +25,9 @@ class _UnblockingChallanWorklistPageState
   final TextEditingController _endDateController = TextEditingController();
 
   final _source = ChallanDataSource(MockData.challanData);
-
   int _rowsPerPage = 10;
+  int? sortColumnIndex;
+  bool sortAscending = true;
 
   Future<void> _selectDate(
     BuildContext context,
@@ -42,6 +45,22 @@ class _UnblockingChallanWorklistPageState
   }
 
   double get width => MediaQuery.of(context).size.width;
+
+  void onSort<T>(
+    int colummIndex,
+    Comparable<T> Function(ChallanRecord record) getField,
+  ) {
+    setState(() {
+      if (sortColumnIndex == colummIndex) {
+        sortAscending = !sortAscending;
+      } else {
+        sortColumnIndex = colummIndex;
+        sortAscending = true;
+      }
+
+      _source.sort(getField, sortAscending);
+    });
+  }
 
   @override
   void dispose() {
@@ -137,7 +156,10 @@ class _UnblockingChallanWorklistPageState
                     crossAxisAlignment: CrossAxisAlignment.start,
                     spacing: 5,
                     children: [
-                      Text("Deductor Name"),
+                      Text(
+                        "Deductor Name",
+                        style: TextStyle(fontWeight: FontWeight.w500),
+                      ),
                       InputField(hintText: "Enter Name"),
                     ],
                   ),
@@ -148,7 +170,10 @@ class _UnblockingChallanWorklistPageState
                     crossAxisAlignment: CrossAxisAlignment.start,
                     spacing: 5,
                     children: [
-                      Text("Deductor TAN"),
+                      Text(
+                        "Deductor TAN",
+                        style: TextStyle(fontWeight: FontWeight.w500),
+                      ),
                       InputField(hintText: "Enter TAN"),
                     ],
                   ),
@@ -159,7 +184,10 @@ class _UnblockingChallanWorklistPageState
                     crossAxisAlignment: CrossAxisAlignment.start,
                     spacing: 5,
                     children: [
-                      Text("Application ID"),
+                      Text(
+                        "Application ID",
+                        style: TextStyle(fontWeight: FontWeight.w500),
+                      ),
                       InputField(hintText: "Enter Application ID"),
                     ],
                   ),
@@ -176,7 +204,10 @@ class _UnblockingChallanWorklistPageState
                     crossAxisAlignment: CrossAxisAlignment.start,
                     spacing: 5,
                     children: [
-                      Text("Application Date (from-to)"),
+                      Text(
+                        "Application Date (from-to)",
+                        style: TextStyle(fontWeight: FontWeight.w500),
+                      ),
                       Row(
                         spacing: 10,
                         children: [
@@ -212,7 +243,10 @@ class _UnblockingChallanWorklistPageState
                     crossAxisAlignment: CrossAxisAlignment.start,
                     spacing: 5,
                     children: [
-                      Text("Deductor's Response"),
+                      Text(
+                        "Deductor's Response",
+                        style: TextStyle(fontWeight: FontWeight.w500),
+                      ),
                       CustomDropdown(
                         items: MockData.deductorsResponse,
                         hintText: "Select Deductor Response",
@@ -226,7 +260,10 @@ class _UnblockingChallanWorklistPageState
                     crossAxisAlignment: CrossAxisAlignment.start,
                     spacing: 5,
                     children: [
-                      Text("Assigned To Sub-User"),
+                      Text(
+                        "Assigned To Sub-User",
+                        style: TextStyle(fontWeight: FontWeight.w500),
+                      ),
                       CustomDropdown(
                         items: MockData.assignedToSubUser,
                         hintText: "Yes/No",
@@ -246,7 +283,10 @@ class _UnblockingChallanWorklistPageState
                     crossAxisAlignment: CrossAxisAlignment.start,
                     spacing: 5,
                     children: [
-                      Text("Status"),
+                      Text(
+                        "Status",
+                        style: TextStyle(fontWeight: FontWeight.w500),
+                      ),
                       CustomDropdown(
                         items: MockData.status,
                         hintText: "Select Status",
@@ -260,7 +300,10 @@ class _UnblockingChallanWorklistPageState
                     crossAxisAlignment: CrossAxisAlignment.start,
                     spacing: 5,
                     children: [
-                      Text("Date of Hearing (from - to)"),
+                      Text(
+                        "Date of Hearing (from - to)",
+                        style: TextStyle(fontWeight: FontWeight.w500),
+                      ),
                       Row(
                         spacing: 10,
                         children: [
@@ -296,7 +339,10 @@ class _UnblockingChallanWorklistPageState
                     crossAxisAlignment: CrossAxisAlignment.start,
                     spacing: 5,
                     children: [
-                      Text("Ageing"),
+                      Text(
+                        "Ageing",
+                        style: TextStyle(fontWeight: FontWeight.w500),
+                      ),
                       CustomDropdown(
                         items: MockData.ageing,
                         hintText: "Select Ageing",
@@ -373,9 +419,9 @@ class _UnblockingChallanWorklistPageState
                 Row(
                   spacing: 15,
                   children: [
-                    Button(text: "Delegate"),
-                    Button(text: "Reassign"),
-                    Button(text: "Recall"),
+                    Button(text: "Delegate", icon: Icons.send_outlined),
+                    Button(text: "Reassign", icon: Icons.how_to_reg_outlined),
+                    Button(text: "Recall", icon: Icons.refresh),
                   ],
                 ),
               ],
@@ -388,29 +434,99 @@ class _UnblockingChallanWorklistPageState
                   headingTextStyle: const TextStyle(
                     fontWeight: FontWeight.w900,
                   ),
-
+                  dividerThickness: 0,
                   dataTextStyle: const TextStyle(fontWeight: FontWeight.w500),
                 ),
+
                 child: PaginatedDataTable(
                   headingRowHeight: 72,
                   headingRowColor: WidgetStateProperty.all(
                     AppTheme.backgroundColor,
                   ),
+
                   columns: [
                     DataColumn(label: Text("Application ID")),
                     DataColumn(label: Text("Deductor TAN")),
                     DataColumn(label: Text("Deductor Name")),
-                    DataColumn(label: Text("Date Of Application")),
-                    DataColumn(label: Text("Status")),
-                    DataColumn(label: Text("Ageing (Days)")),
-                    DataColumn(label: Text("Deductor's Response")),
-                    DataColumn(label: Text("Date of Hearing")),
-                    DataColumn(label: Text("Assigned to Sub-User")),
+                    DataColumn(
+                      label: SizedBox(
+                        width: 100,
+                        child: Text("Date Of Application", softWrap: true),
+                      ),
+
+                      mouseCursor: WidgetStateProperty.all(
+                        SystemMouseCursors.click,
+                      ),
+
+                      onSort: (columnIndex, ascending) {
+                        onSort<DateTime>(
+                          columnIndex,
+                          (record) =>
+                              DateFormat('dd/MM/yyyy')
+                                  .parse(record.dateOfApplication),
+                        );
+                      },
+                    ),
+                    DataColumn(
+                      label: SizedBox(
+                        width: 100,
+                        child: Text("Status", softWrap: true),
+                      ),
+                    ),
+                    DataColumn(
+                      label: SizedBox(
+                        width: 100,
+                        child: Text("Ageing (Days)", softWrap: true),
+                      ),
+
+                      mouseCursor: WidgetStateProperty.all(
+                        SystemMouseCursors.click,
+                      ),
+                      numeric: true,
+                      onSort: (columnIndex, ascending) => onSort<num>(
+                        columnIndex,
+                        (record) => record.ageingDays,
+                      ),
+                    ),
+                    DataColumn(
+                      label: Text("Deductor's Response", softWrap: true),
+                    ),
+                    DataColumn(
+                      label: SizedBox(
+                        width: 100,
+                        child: Text("Date Of Hearing", softWrap: true),
+                      ),
+
+                      mouseCursor: WidgetStateProperty.all(
+                        SystemMouseCursors.click,
+                      ),
+
+                      onSort: (columnIndex, ascending) {
+                        onSort<DateTime>(
+                          columnIndex,
+                          (record) =>
+                              DateFormat('dd/MM/yyyy')
+                                  .parse(record.dateOfHearing),
+                        );
+                      },
+                    ),
+                    DataColumn(
+                      label: SizedBox(
+                        width: 100,
+                        child: Text("Assigned to Sub-User", softWrap: true),
+                      ),
+                    ),
                   ],
 
                   source: _source,
-                  rowsPerPage: _rowsPerPage,
+                  sortColumnIndex: sortColumnIndex,
+                  sortAscending: sortAscending,
                   availableRowsPerPage: const [10, 20, 50, 100],
+                  rowsPerPage: _rowsPerPage,
+                  showCheckboxColumn: true,
+                  columnSpacing: 50,
+                  horizontalMargin: 16,
+                  dataRowMinHeight: 56,
 
                   onRowsPerPageChanged: (value) {
                     if (value == null) return;
@@ -419,13 +535,20 @@ class _UnblockingChallanWorklistPageState
                     });
                   },
 
-                  showCheckboxColumn: true,
-                  columnSpacing: 70,
-                  horizontalMargin: 16,
-                  dataRowMinHeight: 56,
                   dataRowMaxHeight: 72,
                 ),
               ),
+            ),
+            Row(
+              children: [
+                Button(
+                  text: "Back",
+                  icon: Icons.keyboard_arrow_left_outlined,
+                  textColor: AppTheme.primaryColor,
+                  borderColor: AppTheme.primaryColor,
+                  onPressed: () => {},
+                ),
+              ],
             ),
           ],
         ),

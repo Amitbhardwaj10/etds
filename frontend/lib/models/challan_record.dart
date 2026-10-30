@@ -11,5 +11,16 @@ class ChallanRecord {
 
   bool selected;
 
-  ChallanRecord({required this.applicationId, required this.deductorTan, required this.deductorName, required this.dateOfApplication, required this.status, required this.ageingDays, required this.deductorResponse, required this.dateOfHearing, required this.assignedTo, this.selected = false});
+  ChallanRecord({
+    required this.applicationId,
+    required this.deductorTan,
+    required this.deductorName,
+    required this.dateOfApplication,
+    required this.status,
+    required this.ageingDays,
+    required this.deductorResponse,
+    required this.dateOfHearing,
+    required this.assignedTo,
+    this.selected = false,
+  });
 }
