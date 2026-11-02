@@ -9,7 +9,7 @@ class MockData {
     "Deductor 5",
   ];
 
-  static final List<String> assignedToSubUser = ["Yes", "No"];
+  static final List<String> assignedToSubUser = ["Shyam Anand", "No"];
 
   static final List<String> status = [
     "Pending",

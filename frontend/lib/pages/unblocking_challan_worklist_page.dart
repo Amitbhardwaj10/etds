@@ -1,4 +1,3 @@
-import 'package:excel/excel.dart';
 import 'package:flutter/material.dart';
 import 'package:frontend/models/challan_record.dart';
 import 'package:frontend/tableData/data.dart';
@@ -21,8 +20,11 @@ class UnblockingChallanWorklistPage extends StatefulWidget {
 class _UnblockingChallanWorklistPageState
     extends State<UnblockingChallanWorklistPage> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  final TextEditingController _startDateController = TextEditingController();
-  final TextEditingController _endDateController = TextEditingController();
+  final _startDateController = TextEditingController();
+  final _endDateController = TextEditingController();
+  final _deductorNameController = TextEditingController();
+  final _deductorTanController = TextEditingController();
+  final _applicatioIdController = TextEditingController();
 
   final _source = ChallanDataSource(MockData.challanData);
   int _rowsPerPage = 10;
@@ -39,9 +41,10 @@ class _UnblockingChallanWorklistPageState
       lastDate: DateTime(3000),
       initialDate: DateTime.now(),
     );
-    setState(() {
-      controller.text = DateFormat('dd/MM/yyyy', 'en_IN').format(picked!);
-    });
+
+    if (picked == null) return;
+
+    controller.text = DateFormat('dd/MM/yyyy').format(picked);
   }
 
   double get width => MediaQuery.of(context).size.width;
@@ -62,10 +65,20 @@ class _UnblockingChallanWorklistPageState
     });
   }
 
+  void onSearch() {
+    if (_formKey.currentState!.validate()) {
+      _formKey.currentState!.reset();
+    }
+    return;
+  }
+
   @override
   void dispose() {
     _startDateController.dispose();
     _endDateController.dispose();
+    _deductorNameController.dispose();
+    _applicatioIdController.dispose();
+    _deductorTanController.dispose();
     super.dispose();
   }
 
@@ -160,7 +173,21 @@ class _UnblockingChallanWorklistPageState
                         "Deductor Name",
                         style: TextStyle(fontWeight: FontWeight.w500),
                       ),
-                      InputField(hintText: "Enter Name"),
+                      TextFormField(
+                        controller: _deductorNameController,
+                        decoration: InputDecoration(
+                          hint: Text("Enter Name"),
+                          border: OutlineInputBorder(),
+                        ),
+
+                        maxLength: 125,
+                        buildCounter: (
+                          context, {
+                          required currentLength,
+                          required isFocused,
+                          required maxLength,
+                        }) => null,
+                      ),
                     ],
                   ),
                 ),
@@ -174,7 +201,27 @@ class _UnblockingChallanWorklistPageState
                         "Deductor TAN",
                         style: TextStyle(fontWeight: FontWeight.w500),
                       ),
-                      InputField(hintText: "Enter TAN"),
+                      TextFormField(
+                        controller: _deductorTanController,
+                        decoration: InputDecoration(
+                          hint: Text("Enter TAN"),
+                          border: OutlineInputBorder(),
+                        ),
+
+                        validator: (value) {
+                          final regExp = RegExp(
+                            r'^[A-Za-z]{4}[0-9]{5}[A-Za-z]$',
+                          );
+
+                          if (value != null &&
+                              value.isNotEmpty &&
+                              !regExp.hasMatch(value)) {
+                            return "Please enter a valid TAN number";
+                          }
+
+                          return null;
+                        },
+                      ),
                     ],
                   ),
                 ),
@@ -188,7 +235,30 @@ class _UnblockingChallanWorklistPageState
                         "Application ID",
                         style: TextStyle(fontWeight: FontWeight.w500),
                       ),
-                      InputField(hintText: "Enter Application ID"),
+                      TextFormField(
+                        controller: _applicatioIdController,
+                        decoration: InputDecoration(
+                          hint: Text("Enter Application ID"),
+                          border: OutlineInputBorder(),
+                        ),
+
+                        maxLength: 11,
+                        buildCounter: (
+                          context, {
+                          required currentLength,
+                          required isFocused,
+                          required maxLength,
+                        }) => null,
+
+                        validator: (value) {
+                          if (value != null &&
+                              value.isNotEmpty &&
+                              value.trim().length != 11) {
+                            return 'Application ID must be 11 characters';
+                          }
+                          return null;
+                        },
+                      ),
                     ],
                   ),
                 ),
@@ -359,7 +429,7 @@ class _UnblockingChallanWorklistPageState
               children: [
                 Button(
                   text: "Search",
-                  onPressed: () => {},
+                  onPressed: onSearch,
                   bgColor: AppTheme.primaryColor,
                   textColor: AppTheme.primaryWhite,
                   padding: EdgeInsetsGeometry.symmetric(
@@ -482,7 +552,6 @@ class _UnblockingChallanWorklistPageState
                       mouseCursor: WidgetStateProperty.all(
                         SystemMouseCursors.click,
                       ),
-                      numeric: true,
                       onSort: (columnIndex, ascending) => onSort<num>(
                         columnIndex,
                         (record) => record.ageingDays,

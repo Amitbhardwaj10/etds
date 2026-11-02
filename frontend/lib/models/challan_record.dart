@@ -8,7 +8,6 @@ class ChallanRecord {
   final String deductorResponse;
   final String dateOfHearing;
   final String assignedTo;
-
   bool selected;
 
   ChallanRecord({
