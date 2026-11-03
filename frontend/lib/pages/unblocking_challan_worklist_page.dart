@@ -20,12 +20,15 @@ class UnblockingChallanWorklistPage extends StatefulWidget {
 class _UnblockingChallanWorklistPageState
     extends State<UnblockingChallanWorklistPage> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  final _startDateController = TextEditingController();
-  final _endDateController = TextEditingController();
+  final _applicationStartDateController = TextEditingController();
+  final _applicationEndDateController = TextEditingController();
+  final _hearingStartDateController = TextEditingController();
+  final _hearingEndDateController = TextEditingController();
   final _deductorNameController = TextEditingController();
   final _deductorTanController = TextEditingController();
   final _applicatioIdController = TextEditingController();
 
+  AutovalidateMode _autovalidateMode = AutovalidateMode.disabled;
   final _source = ChallanDataSource(MockData.challanData);
   int _rowsPerPage = 10;
   int? sortColumnIndex;
@@ -68,14 +71,46 @@ class _UnblockingChallanWorklistPageState
   void onSearch() {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.reset();
+    } else {
+      setState(() {
+        _autovalidateMode = AutovalidateMode.onUserInteraction;
+      });
     }
     return;
   }
 
+  String? dateValidator(
+    TextEditingController startController,
+    TextEditingController endController, {
+    required bool isStartDate,
+  }) {
+    final startText = startController.text.trim();
+    final endText = endController.text.trim();
+
+    if (startText.isEmpty || endText.isEmpty) {
+      return null;
+    }
+
+    final startDate = DateFormat("dd/MM/yyyy").parseStrict(startText);
+    final endDate = DateFormat('dd/MM/yyyy').parseStrict(endText);
+
+    if (isStartDate && startDate.isAfter(endDate)) {
+      return "Start date cannot be after end date";
+    }
+
+    if (!isStartDate && endDate.isBefore(startDate)) {
+      return "End date cannot be before sart date";
+    }
+
+    return null;
+  }
+
   @override
   void dispose() {
-    _startDateController.dispose();
-    _endDateController.dispose();
+    _applicationStartDateController.dispose();
+    _applicatioIdController.dispose();
+    _hearingStartDateController.dispose();
+    _hearingEndDateController.dispose();
     _deductorNameController.dispose();
     _applicatioIdController.dispose();
     _deductorTanController.dispose();
@@ -87,6 +122,7 @@ class _UnblockingChallanWorklistPageState
     return SizedBox(
       width: double.maxFinite,
       child: Form(
+        autovalidateMode: _autovalidateMode,
         key: _formKey,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -286,9 +322,16 @@ class _UnblockingChallanWorklistPageState
                               hintText: "Start date",
                               readOnly: true,
                               suffixIcon: Icon(Icons.calendar_today_outlined),
-                              controller: _startDateController,
-                              onTap: () =>
-                                  _selectDate(context, _startDateController),
+                              controller: _applicationStartDateController,
+                              validator: (value) => dateValidator(
+                                _applicationStartDateController,
+                                _applicationEndDateController,
+                                isStartDate: true,
+                              ),
+                              onTap: () => _selectDate(
+                                context,
+                                _applicationStartDateController,
+                              ),
                             ),
                           ),
 
@@ -297,9 +340,28 @@ class _UnblockingChallanWorklistPageState
                               hintText: "End date",
                               readOnly: true,
                               suffixIcon: Icon(Icons.calendar_today_outlined),
-                              controller: _endDateController,
+                              controller: _applicationEndDateController,
+                              validator: (value) => dateValidator(
+                                _applicationStartDateController,
+                                _applicationEndDateController,
+                                isStartDate: false,
+                              ),
                               onTap: () =>
-                                  _selectDate(context, _endDateController),
+                                  (_applicationStartDateController
+                                      .text
+                                      .isNotEmpty)
+                                  ? _selectDate(
+                                      context,
+                                      _applicationEndDateController,
+                                    )
+                                  : ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        backgroundColor: AppTheme.errorColor,
+                                        content: Text(
+                                          "Select start date first",
+                                        ),
+                                      ),
+                                    ),
                             ),
                           ),
                         ],
@@ -382,9 +444,16 @@ class _UnblockingChallanWorklistPageState
                               hintText: "Start date",
                               readOnly: true,
                               suffixIcon: Icon(Icons.calendar_today_outlined),
-                              controller: _startDateController,
-                              onTap: () =>
-                                  _selectDate(context, _startDateController),
+                              controller: _hearingStartDateController,
+                              validator: (value) => dateValidator(
+                                _hearingStartDateController,
+                                _hearingEndDateController,
+                                isStartDate: true,
+                              ),
+                              onTap: () => _selectDate(
+                                context,
+                                _hearingStartDateController,
+                              ),
                             ),
                           ),
 
@@ -393,9 +462,26 @@ class _UnblockingChallanWorklistPageState
                               hintText: "End date",
                               readOnly: true,
                               suffixIcon: Icon(Icons.calendar_today_outlined),
-                              controller: _endDateController,
+                              controller: _hearingEndDateController,
+                              validator: (value) => dateValidator(
+                                _hearingStartDateController,
+                                _hearingEndDateController,
+                                isStartDate: false,
+                              ),
                               onTap: () =>
-                                  _selectDate(context, _endDateController),
+                                  (_hearingStartDateController.text.isNotEmpty)
+                                  ? _selectDate(
+                                      context,
+                                      _hearingEndDateController,
+                                    )
+                                  : ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        backgroundColor: AppTheme.errorColor,
+                                        content: Text(
+                                          "Select start date first",
+                                        ),
+                                      ),
+                                    ),
                             ),
                           ),
                         ],

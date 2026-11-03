@@ -7,6 +7,7 @@ class InputField extends StatelessWidget {
   final bool readOnly;
   final Icon? suffixIcon;
   final VoidCallback? onTap;
+  final String? Function(String?)? _validator;
   const InputField({
     super.key,
     required this.hintText,
@@ -14,6 +15,7 @@ class InputField extends StatelessWidget {
     this.readOnly = false,
     this.suffixIcon,
     this.onTap,
+    this._validator,
   });
 
   @override
@@ -22,6 +24,7 @@ class InputField extends StatelessWidget {
       onTap: onTap,
       readOnly: readOnly,
       controller: controller,
+      validator: _validator,
       decoration: InputDecoration(
         hintText: hintText,
         hintStyle: TextStyle(color: AppTheme.secondaryText),
