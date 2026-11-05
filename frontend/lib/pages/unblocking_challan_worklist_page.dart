@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:frontend/models/challan_record.dart';
 import 'package:frontend/tableData/data.dart';
 import 'package:frontend/theme/app_theme.dart';
@@ -27,9 +28,22 @@ class _UnblockingChallanWorklistPageState
   final _deductorNameController = TextEditingController();
   final _deductorTanController = TextEditingController();
   final _applicatioIdController = TextEditingController();
+  final ValueNotifier<String?> selectedDeductorResp = ValueNotifier(null);
+  final ValueNotifier<String?> selectedSubUser = ValueNotifier(null);
+  final ValueNotifier<String?> selectedStatus = ValueNotifier(null);
+  final ValueNotifier<String?> selectedAgeing = ValueNotifier(null);
+
+  late final List<ChallanRecord> _allRecords;
+  late final ChallanDataSource _source;
+
+  @override
+  void initState() {
+    super.initState();
+    _allRecords = List<ChallanRecord>.of(MockData.challanData);
+    _source = ChallanDataSource(_allRecords);
+  }
 
   AutovalidateMode _autovalidateMode = AutovalidateMode.disabled;
-  final _source = ChallanDataSource(MockData.challanData);
   int _rowsPerPage = 10;
   int? sortColumnIndex;
   bool sortAscending = true;
@@ -41,17 +55,20 @@ class _UnblockingChallanWorklistPageState
     final picked = await showDatePicker(
       context: context,
       firstDate: DateTime(2000),
-      lastDate: DateTime(3000),
+      lastDate: DateTime.now(),
       initialDate: DateTime.now(),
     );
 
     if (picked == null) return;
 
-    controller.text = DateFormat('dd/MM/yyyy').format(picked);
+    setState(() {
+      controller.text = DateFormat('dd/MM/yyyy').format(picked);
+    });
   }
 
   double get width => MediaQuery.of(context).size.width;
 
+  // sorting
   void onSort<T>(
     int colummIndex,
     Comparable<T> Function(ChallanRecord record) getField,
@@ -68,9 +85,10 @@ class _UnblockingChallanWorklistPageState
     });
   }
 
+  // on search of filters
   void onSearch() {
     if (_formKey.currentState!.validate()) {
-      _formKey.currentState!.reset();
+      applyFilters();
     } else {
       setState(() {
         _autovalidateMode = AutovalidateMode.onUserInteraction;
@@ -79,6 +97,34 @@ class _UnblockingChallanWorklistPageState
     return;
   }
 
+  // on reset of filters
+  void onReset() {
+    _formKey.currentState?.reset();
+
+    _deductorNameController.clear();
+    _deductorTanController.clear();
+    _applicatioIdController.clear();
+
+    _applicationStartDateController.clear();
+    _applicationEndDateController.clear();
+    _hearingStartDateController.clear();
+    _hearingEndDateController.clear();
+
+    selectedDeductorResp.value = null;
+    selectedSubUser.value = null;
+    selectedStatus.value = null;
+    selectedAgeing.value = null;
+
+    setState(() {
+      _autovalidateMode = AutovalidateMode.disabled;
+      sortColumnIndex = null;
+      sortAscending = true;
+    });
+
+    _source.resetData();
+  }
+
+  // date validator
   String? dateValidator(
     TextEditingController startController,
     TextEditingController endController, {
@@ -87,22 +133,191 @@ class _UnblockingChallanWorklistPageState
     final startText = startController.text.trim();
     final endText = endController.text.trim();
 
-    if (startText.isEmpty || endText.isEmpty) {
-      return null;
-    }
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
 
-    final startDate = DateFormat("dd/MM/yyyy").parseStrict(startText);
-    final endDate = DateFormat('dd/MM/yyyy').parseStrict(endText);
+    final startDate = startText.isNotEmpty
+        ? DateFormat('dd/MM/yyyy').parseStrict(startText)
+        : null;
 
-    if (isStartDate && startDate.isAfter(endDate)) {
-      return "Start date cannot be after end date";
-    }
+    final endDate = endText.isNotEmpty
+        ? DateFormat('dd/MM/yyyy').parseStrict(endText)
+        : null;
 
-    if (!isStartDate && endDate.isBefore(startDate)) {
-      return "End date cannot be before sart date";
+    if (isStartDate) {
+      if (startDate != null && startDate.isAfter(today)) {
+        return "Start date cannot be in the future";
+      }
+
+      if (startDate != null && endDate != null && startDate.isAfter(endDate)) {
+        return "Start date cannot be after end date";
+      }
+    } else {
+      if (endDate != null && endDate.isAfter(today)) {
+        return "End date cannot be in the future";
+      }
+
+      if (startDate != null && endDate != null && endDate.isBefore(startDate)) {
+        return "End date cannot be before start date";
+      }
     }
 
     return null;
+  }
+
+  bool isWithinDateRange(
+    String recordDate,
+    TextEditingController startController,
+    TextEditingController endController,
+  ) {
+    final date = DateFormat('dd/MM/yyyy').parseStrict(recordDate);
+
+    final startDate = startController.text.isNotEmpty
+        ? DateFormat('dd/MM/yyyy').parseStrict(startController.text)
+        : null;
+
+    final endDate = endController.text.isNotEmpty
+        ? DateFormat('dd/MM/yyyy').parseStrict(endController.text)
+        : null;
+
+    if (startDate != null && date.isBefore(startDate)) {
+      return false;
+    }
+
+    if (endDate != null && date.isAfter(endDate)) {
+      return false;
+    }
+
+    return true;
+  }
+
+  bool isAnyFilterApplied() {
+    return _deductorNameController.text.trim().isNotEmpty ||
+        _deductorTanController.text.trim().isNotEmpty ||
+        _applicatioIdController.text.trim().isNotEmpty ||
+        _applicationStartDateController.text.isNotEmpty ||
+        _applicationEndDateController.text.isNotEmpty ||
+        _hearingStartDateController.text.isNotEmpty ||
+        _hearingEndDateController.text.isNotEmpty ||
+        selectedDeductorResp.value != null ||
+        selectedSubUser.value != null ||
+        selectedStatus.value != null ||
+        selectedAgeing.value != null;
+  }
+
+  bool matchesStatus(String recordStatus, String? selectedStatus) {
+    if (selectedStatus == null || selectedStatus == 'All') {
+      return true;
+    }
+
+    switch (selectedStatus) {
+      case 'Pending':
+        return recordStatus.toLowerCase() == 'pending';
+
+      case 'Closed':
+        return recordStatus.toLowerCase() == 'closed';
+
+      case 'Withdrawn':
+        return recordStatus.toLowerCase() == 'application withdrawn';
+
+      case 'Pending With RH':
+        return recordStatus.toLowerCase() == 'pending with range head';
+
+      default:
+        return true;
+    }
+  }
+
+  // Apply filters to the data source
+  void applyFilters() {
+    final deductorName = _deductorNameController.text.trim().toLowerCase();
+
+    final deductorTan = _deductorTanController.text.trim().toLowerCase();
+
+    final applicationId = _applicatioIdController.text.trim().toLowerCase();
+
+    final filteredRecords = _allRecords.where((record) {
+      // Deductor name
+      if (deductorName.isNotEmpty &&
+          !record.deductorName.toLowerCase().contains(deductorName)) {
+        return false;
+      }
+
+      // Deductor TAN
+      if (deductorTan.isNotEmpty &&
+          !record.deductorTan.toLowerCase().contains(deductorTan)) {
+        return false;
+      }
+
+      // Application ID
+      if (applicationId.isNotEmpty &&
+          !record.applicationId.toLowerCase().contains(applicationId)) {
+        return false;
+      }
+
+      // Status
+      if (!matchesStatus(record.status, selectedStatus.value)) {
+        return false;
+      }
+
+      // Deductor response
+      if (selectedDeductorResp.value != null &&
+          record.deductorResponse != selectedDeductorResp.value) {
+        return false;
+      }
+
+      // Assigned sub-user
+      if (selectedSubUser.value != null &&
+          record.assignedTo != selectedSubUser.value) {
+        return false;
+      }
+
+      if (selectedAgeing.value != null) {
+        final ageing = record.ageingDays;
+
+        switch (selectedAgeing.value) {
+          case '0-15 days':
+            if (ageing < 0 || ageing > 15) {
+              return false;
+            }
+            break;
+
+          case '16-30 days':
+            if (ageing < 16 || ageing > 30) return false;
+            break;
+
+          case '31-60 days':
+            if (ageing < 31 || ageing > 60) return false;
+            break;
+
+          case '>60 days':
+            if (ageing <= 60) return false;
+            break;
+        }
+      }
+
+      // Application date filter
+      if (!isWithinDateRange(
+        record.dateOfApplication,
+        _applicationStartDateController,
+        _applicationEndDateController,
+      )) {
+        return false;
+      }
+
+      // Hearing date filter
+      if (!isWithinDateRange(
+        record.dateOfHearing,
+        _hearingStartDateController,
+        _hearingEndDateController,
+      )) {
+        return false;
+      }
+
+      return true;
+    }).toList();
+
+    _source.updateData(filteredRecords);
   }
 
   @override
@@ -112,8 +327,11 @@ class _UnblockingChallanWorklistPageState
     _hearingStartDateController.dispose();
     _hearingEndDateController.dispose();
     _deductorNameController.dispose();
-    _applicatioIdController.dispose();
     _deductorTanController.dispose();
+    selectedDeductorResp.dispose();
+    selectedSubUser.dispose();
+    selectedStatus.dispose();
+    selectedAgeing.dispose();
     super.dispose();
   }
 
@@ -209,20 +427,12 @@ class _UnblockingChallanWorklistPageState
                         "Deductor Name",
                         style: TextStyle(fontWeight: FontWeight.w500),
                       ),
-                      TextFormField(
+                      InputField(
+                        hintText: "Enter Name",
                         controller: _deductorNameController,
-                        decoration: InputDecoration(
-                          hint: Text("Enter Name"),
-                          border: OutlineInputBorder(),
-                        ),
-
                         maxLength: 125,
-                        buildCounter: (
-                          context, {
-                          required currentLength,
-                          required isFocused,
-                          required maxLength,
-                        }) => null,
+                        showCounter: false,
+                        onChanged: (value) => setState(() {}),
                       ),
                     ],
                   ),
@@ -237,13 +447,12 @@ class _UnblockingChallanWorklistPageState
                         "Deductor TAN",
                         style: TextStyle(fontWeight: FontWeight.w500),
                       ),
-                      TextFormField(
+                      InputField(
                         controller: _deductorTanController,
-                        decoration: InputDecoration(
-                          hint: Text("Enter TAN"),
-                          border: OutlineInputBorder(),
-                        ),
-
+                        hintText: "Enter TAN",
+                        maxLength: 10,
+                        showCounter: false,
+                        onChanged: (value) => setState(() {}),
                         validator: (value) {
                           final regExp = RegExp(
                             r'^[A-Za-z]{4}[0-9]{5}[A-Za-z]$',
@@ -271,21 +480,12 @@ class _UnblockingChallanWorklistPageState
                         "Application ID",
                         style: TextStyle(fontWeight: FontWeight.w500),
                       ),
-                      TextFormField(
+                      InputField(
                         controller: _applicatioIdController,
-                        decoration: InputDecoration(
-                          hint: Text("Enter Application ID"),
-                          border: OutlineInputBorder(),
-                        ),
-
+                        hintText: "Enter Application ID",
                         maxLength: 11,
-                        buildCounter: (
-                          context, {
-                          required currentLength,
-                          required isFocused,
-                          required maxLength,
-                        }) => null,
-
+                        showCounter: false,
+                        onChanged: (value) => setState(() {}),
                         validator: (value) {
                           if (value != null &&
                               value.isNotEmpty &&
@@ -328,6 +528,7 @@ class _UnblockingChallanWorklistPageState
                                 _applicationEndDateController,
                                 isStartDate: true,
                               ),
+                              onChanged: (value) => setState(() {}),
                               onTap: () => _selectDate(
                                 context,
                                 _applicationStartDateController,
@@ -346,6 +547,7 @@ class _UnblockingChallanWorklistPageState
                                 _applicationEndDateController,
                                 isStartDate: false,
                               ),
+                              onChanged: (value) => setState(() {}),
                               onTap: () =>
                                   (_applicationStartDateController
                                       .text
@@ -382,6 +584,10 @@ class _UnblockingChallanWorklistPageState
                       CustomDropdown(
                         items: MockData.deductorsResponse,
                         hintText: "Select Deductor Response",
+                        valueListenable: selectedDeductorResp,
+                        onChanged: (value) {
+                          setState(() {});
+                        },
                       ),
                     ],
                   ),
@@ -399,6 +605,10 @@ class _UnblockingChallanWorklistPageState
                       CustomDropdown(
                         items: MockData.assignedToSubUser,
                         hintText: "Yes/No",
+                        valueListenable: selectedSubUser,
+                        onChanged: (value) {
+                          setState(() {});
+                        },
                       ),
                     ],
                   ),
@@ -422,6 +632,10 @@ class _UnblockingChallanWorklistPageState
                       CustomDropdown(
                         items: MockData.status,
                         hintText: "Select Status",
+                        valueListenable: selectedStatus,
+                        onChanged: (value) {
+                          setState(() {});
+                        },
                       ),
                     ],
                   ),
@@ -450,6 +664,9 @@ class _UnblockingChallanWorklistPageState
                                 _hearingEndDateController,
                                 isStartDate: true,
                               ),
+                              onChanged: (value) {
+                                setState(() {});
+                              },
                               onTap: () => _selectDate(
                                 context,
                                 _hearingStartDateController,
@@ -468,6 +685,9 @@ class _UnblockingChallanWorklistPageState
                                 _hearingEndDateController,
                                 isStartDate: false,
                               ),
+                              onChanged: (value) {
+                                setState(() {});
+                              },
                               onTap: () =>
                                   (_hearingStartDateController.text.isNotEmpty)
                                   ? _selectDate(
@@ -502,6 +722,10 @@ class _UnblockingChallanWorklistPageState
                       CustomDropdown(
                         items: MockData.ageing,
                         hintText: "Select Ageing",
+                        valueListenable: selectedAgeing,
+                        onChanged: (value) {
+                          setState(() {});
+                        },
                       ),
                     ],
                   ),
@@ -515,8 +739,10 @@ class _UnblockingChallanWorklistPageState
               children: [
                 Button(
                   text: "Search",
-                  onPressed: onSearch,
-                  bgColor: AppTheme.primaryColor,
+                  onPressed: isAnyFilterApplied() ? onSearch : null,
+                  bgColor: isAnyFilterApplied()
+                      ? AppTheme.primaryColor
+                      : AppTheme.primaryColor.withValues(alpha: 0.7),
                   textColor: AppTheme.primaryWhite,
                   padding: EdgeInsetsGeometry.symmetric(
                     horizontal: 20,
@@ -526,7 +752,13 @@ class _UnblockingChallanWorklistPageState
 
                 Button(
                   text: "Reset",
-                  textColor: AppTheme.secondaryText,
+                  onPressed: isAnyFilterApplied() ? onReset : null,
+                  textColor: isAnyFilterApplied()
+                      ? AppTheme.primaryColor
+                      : AppTheme.secondaryText,
+                  borderColor: isAnyFilterApplied()
+                      ? AppTheme.primaryColor
+                      : AppTheme.secondaryText,
                   padding: EdgeInsetsGeometry.symmetric(
                     horizontal: 20,
                     vertical: 16,
@@ -694,6 +926,36 @@ class _UnblockingChallanWorklistPageState
                 ),
               ),
             ),
+
+            Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                InkWell(
+                  onTap: () => {},
+                  overlayColor: WidgetStatePropertyAll(Colors.transparent),
+                  child: Row(
+                    spacing: 10,
+                    children: [
+                      FaIcon(
+                        FontAwesomeIcons.fileExcel,
+                        color: Colors.green,
+                        size: 20,
+                      ),
+                      Text(
+                        "Export to Excel",
+                        style: TextStyle(
+                          color: AppTheme.hyperText,
+                          decoration: TextDecoration.underline,
+                          decorationColor: AppTheme.hyperText,
+                          decorationThickness: 1.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+
             Row(
               children: [
                 Button(

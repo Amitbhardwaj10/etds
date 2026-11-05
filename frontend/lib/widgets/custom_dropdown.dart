@@ -5,46 +5,71 @@ import 'package:frontend/theme/app_theme.dart';
 class CustomDropdown extends StatelessWidget {
   final List<String> items;
   final String? hintText;
+  final ValueNotifier<String?> valueListenable;
+  final ValueChanged<String?>? onChanged;
 
-  CustomDropdown({super.key, required this.items, this.hintText});
-
-  final valueListenable = ValueNotifier<String?>(null);
+  const CustomDropdown({
+    super.key,
+    required this.items,
+    required this.valueListenable,
+    this.hintText,
+    this.onChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return DropdownButtonFormField2(
+    return DropdownButtonFormField2<String>(
       isExpanded: true,
+
       items: items
-          .map((item) => DropdownItem(value: item, child: Text(item)))
+          .map(
+            (item) => DropdownItem<String>(
+              value: item,
+              child: Text(item),
+            ),
+          )
           .toList(),
 
       decoration: InputDecoration(
-        contentPadding: EdgeInsets.symmetric(horizontal: 0, vertical: 0),
-
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 0,
+          vertical: 0,
+        ),
         border: OutlineInputBorder(
           borderSide: BorderSide(color: AppTheme.borderColor),
         ),
-
         focusedBorder: OutlineInputBorder(
-          borderSide: BorderSide(color: AppTheme.primaryColor, width: 2),
+          borderSide: BorderSide(
+            color: AppTheme.primaryColor,
+            width: 2,
+          ),
         ),
       ),
 
       dropdownStyleData: DropdownStyleData(
-        padding: EdgeInsets.symmetric(horizontal: 0),
-        decoration: BoxDecoration(color: AppTheme.primaryWhite),
+        padding: const EdgeInsets.symmetric(horizontal: 0),
+        decoration: BoxDecoration(
+          color: AppTheme.primaryWhite,
+        ),
       ),
 
-      menuItemStyleData: MenuItemStyleData(
+      menuItemStyleData: const MenuItemStyleData(
         padding: EdgeInsets.symmetric(horizontal: 15),
       ),
 
-      hint: Text(hintText ?? ''),
+      hint: Text(
+        hintText ?? 'Select',
+        style: TextStyle(
+          color: AppTheme.secondaryText,
+          fontWeight: FontWeight.normal,
+        ),
+      ),
 
       valueListenable: valueListenable,
 
       onChanged: (value) {
         valueListenable.value = value;
+        onChanged?.call(value);
       },
     );
   }

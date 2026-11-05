@@ -4,9 +4,26 @@ import 'package:frontend/theme/app_theme.dart';
 import 'package:frontend/widgets/custom_badge.dart';
 
 class ChallanDataSource extends DataTableSource {
-  final List<ChallanRecord> records;
+  final List<ChallanRecord> originalRecords;
 
-  ChallanDataSource(this.records);
+  List<ChallanRecord> records = [];
+
+  ChallanDataSource(List<ChallanRecord> data)
+      : originalRecords = List<ChallanRecord>.of(data) {
+    records = List<ChallanRecord>.of(originalRecords);
+  }
+
+  // Replace currently displayed records
+  void updateData(List<ChallanRecord> newData) {
+    records = List<ChallanRecord>.of(newData);
+    notifyListeners();
+  }
+
+  // Restore original records
+  void resetData() {
+    records = List<ChallanRecord>.of(originalRecords);
+    notifyListeners();
+  }
 
   int get selectedCount => records.where((record) => record.selected).length;
 

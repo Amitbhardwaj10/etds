@@ -2,11 +2,10 @@ import 'package:frontend/models/challan_record.dart';
 
 class MockData {
   static final List<String> deductorsResponse = [
-    "Deductor 1",
-    "Deductor 2",
-    "Deductor 3",
-    "Deductor 4",
-    "Deductor 5",
+    "Adjournment Sought",
+    "Response Awaited",
+    "No Response",
+    "No Adjournment Sought",
   ];
 
   static final List<String> assignedToSubUser = ["Shyam Anand", "No"];
@@ -145,7 +144,7 @@ class MockData {
       status: 'Pending',
       ageingDays: 9,
       deductorResponse:
-          'No Adjournment Sought aslkdfjsd fajlskdjf aksdjf  lkjasjdklfkjsd',
+          'No Adjournment Sought No Adjournment Sought No Adjournment Sought No Adjournment Sought',
       dateOfHearing: '25/12/2024',
       assignedTo: 'Rahul Verma',
     ),

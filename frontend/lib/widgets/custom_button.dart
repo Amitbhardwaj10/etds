@@ -4,12 +4,13 @@ import 'package:frontend/theme/app_theme.dart';
 class Button extends StatelessWidget {
   final String text;
   final Color? bgColor;
-  final Color textColor;
+  final Color? textColor;
   final Color? borderColor;
   final double? borderWidth;
   final EdgeInsetsGeometry padding;
   final IconData? icon;
   final VoidCallback? onPressed;
+
 
   const Button({
     super.key,

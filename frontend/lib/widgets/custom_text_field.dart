@@ -7,7 +7,11 @@ class InputField extends StatelessWidget {
   final bool readOnly;
   final Icon? suffixIcon;
   final VoidCallback? onTap;
+  final ValueChanged<String>? onChanged;
   final String? Function(String?)? _validator;
+  final int? maxLength;
+  final bool? showCounter;
+
   const InputField({
     super.key,
     required this.hintText,
@@ -16,6 +20,9 @@ class InputField extends StatelessWidget {
     this.suffixIcon,
     this.onTap,
     this._validator,
+    this.maxLength,
+    this.showCounter,
+    this.onChanged,
   });
 
   @override
@@ -25,7 +32,10 @@ class InputField extends StatelessWidget {
       readOnly: readOnly,
       controller: controller,
       validator: _validator,
+      onChanged: onChanged,
+      maxLength: maxLength,
       decoration: InputDecoration(
+        counterText: showCounter == false ? '' : null,
         hintText: hintText,
         hintStyle: TextStyle(color: AppTheme.secondaryText),
         contentPadding: EdgeInsets.only(left: 10),
